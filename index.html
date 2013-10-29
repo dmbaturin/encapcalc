@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<!--
+
+Copyright (c) 2013 Daniil Baturin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+-->
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+  <head>
+    <title>Encapsulation overhead calculator</title>
+    <style type="text/css">
+
+      .wrapper
+      {
+          width: 1000px;
+          margin: 0 auto;
+      }
+
+      .box-wrapper
+      {
+          width: 100%;
+          float: left;
+          border: #dadada solid 1px;
+          margin-top: 30px;
+          padding: 10px;
+      }
+
+      .protocol-block-wrapper
+      {
+          float: left;
+          width: 100%;
+          margin-top: 15px;
+      }
+
+      .protocol-block
+      {
+          width: 80%;
+          border: #0990BD solid 1px;
+          background-color: #E3ECEF;
+          padding: 10px;
+          float: left;
+          margin-left: 10%;
+          margin-right: auto;
+       }
+
+      .float-left
+      {
+          float: left;
+      }
+
+      .float-right
+      {
+          float: right;
+      }
+
+      .copyright
+      {
+          float: left;
+          width: 100%;
+          text-align: center;
+          padding-top: 20px;
+          margin-bottom: 20px;
+      }
+
+    </style>
+    <script type="text/javascript">
+      //<![CDATA[
+
+      protocol_hash = {
+          "Ethernet": 14,
+          "802.1q VLAN": 4,
+          "802.1ad QinQ": 4,
+          "MPLS": 4,
+          "PPPoE": 8,
+          "IPv4": 20,
+          "IPv6": 40,
+          "GRE": 4,
+          "GRE with key OR sequence numbers": 8,
+          "GRE with key AND sequence numbers": 12,
+          "UDP": 8,
+          "TCP": 20
+      };
+
+      function calculate_overhead()
+      {
+          mtu = document.getElementById("parent-mtu").value;
+
+          protocols = document.getElementsByClassName("protocol-name");
+
+          overhead = 0;
+
+          for(var i = 0; i < protocols.length; i++)
+          {
+             overhead = overhead + protocol_hash[protocols[i].innerHTML];
+          }
+
+          pdu = mtu - overhead;
+
+          document.getElementById("overhead").innerHTML = overhead + " bytes";
+          document.getElementById("tunnel-mtu").innerHTML = pdu + " bytes" ;
+
+      }
+
+      function generate_proto_dropdown()
+      {
+          dropdown = document.getElementById("protocol-list");
+
+          for( protocol_name in protocol_hash )
+          {
+              option = document.createElement("option");
+              option.innerHTML = protocol_name;
+              
+              dropdown.appendChild(option);
+          }
+      }
+
+      function expand(id) { document.getElementById(id).display = "" }
+
+      function add_protocol(name)
+      {
+          serial = document.getElementById("serial");
+
+          protocols = document.getElementById('protocols');
+
+          protocol_wrapper = document.createElement('div');
+          protocol_wrapper.setAttribute('class', 'protocol-block-wrapper');
+          protocol_wrapper.setAttribute('id', serial.value);
+
+          protocol = document.createElement('div');
+          protocol.setAttribute('class', 'protocol-block');
+
+          protocol_wrapper.appendChild(protocol); 
+
+          content = "<div class='float-left'> <span class='protocol-name'>" + name + "</span> (" + protocol_hash[name] + " bytes) </div>";
+          content += "<div class='float-right'> <input type='button' value='Remove' onclick='remove_element(" + serial.value + ")'/> </div> ";
+          protocol.innerHTML = content;
+          
+          protocols.appendChild(protocol_wrapper);
+         
+
+          document.getElementById("serial").value = parseInt(serial.value) + 1;
+
+          calculate_overhead();
+
+      }
+
+      function remove_element(id)
+      {
+          element = document.getElementById(id);
+          element.parentNode.removeChild(element);
+
+          calculate_overhead();
+      }
+
+      //]]>
+    </script>
+  </head>
+  <body onload="generate_proto_dropdown()">
+    <div class="wrapper">
+      <div class="content">
+        <h1> Encapsulation overhead calculator </h1>
+        <div class="box-wrapper">
+          <form action="#">
+            <h3>Choose protocol</h3>
+            <div>
+              <input id="serial" type="hidden" value="0" /> <!-- Dirty hack to ensure protocol block uniqueness -->
+              <select name="protocol" id="protocol-list">
+                <!-- Generated content here -->
+              </select>
+              <input type="button" value="Add" onclick="add_protocol(document.getElementById('protocol-list').value)" />
+              <br /> <br />
+              <span>Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" />
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="box-wrapper protocol-wrapper">
+        <div id="protocols">
+          <span>Protocols:</span>
+            <!-- Generated content here -->
+        </div>
+      </div>
+      <div class="box-wrapper">
+        Overhead: <span id="overhead"></span>
+        <br />
+        PDU size: <span id="tunnel-mtu"></span>
+      </div>
+      <div class="box-wrapper">
+        <h3>Notes</h3>
+        <p>PDU (Protocol Data Unit) is a general term for frames, packets, segments etc.</p>
+        <p>If you want to calculate tunnel MTU, specify protocols before the encapsulated one. That is,
+           if you want MTU for GRE over IPv4, add IPv4 and GRE. PDU value will be your MTU, whatever
+           you encapslate into GRE must not exceed that size.</p>
+        <p>If you want to calculate TCP MSS, add the underlying protocol and TCP after tunnel protocols. E.g. for TCP over IPv6
+            encapsulated into GRE over IPv4, add IPv4, GRE, IPv6, and TCP.</p>
+        <p>Protocol overhead values here are just what they add to the frame. E.g. if you want MTU for QinQ over physical
+           Ethernet links, just add QinQ, as your physical link MTU already takes Ethernet header and first VLAN tag into account.
+           If you want to encapsulate the whole frame into a pseudowire, add Ethernet, VLAN, and QinQ.</p>
+        <p>IPIP and IP6IP6 (and mixed) encapsulations do not use any specific headers, they are just IPv4 or IPv6
+           packets sent as IPv4 or IPv6 payload. So for IPIP just add IPv4 twice, for IPIP6 add IPv4 and IPv6 etc.</p>
+        <p>This calculator does not check if specified encapsulation is any practical, if implementations exist, or if
+           protocols are in "correct order". In theory you can encapsulate anything in anything, in practice it usually
+           turns out there is even a valid a use case for it, so it just sums up header size. </p>
+        <h4>Examples</h4>
+        <p><strong>GRE over IPv4, encapsulates IPv4. We want tunnel MTU, parent interface MTU is 1500 </strong> <br/>
+           Parent interface MTU is maximum size of IPv4 packets it can transmit, not counting Ethernet frame headers.
+           So we only need to care about IPv4 and GRE, and we add IPv4 (20 bytes) and GRE (4 bytes). Tunnel MTU is 1476,
+           which means maximum size of encapsulated IPv4 packet must not exceed 1476 if we don't want it to be fragmented</p>
+        <p><strong>MSS for the above example.</strong> <br/>
+           To get MSS, we need to add IPv4 and TCP after those IPv4 and GRE. MSS will be 1436 (1476 - 20 - 20), which means
+           TCP payload must not exceed 1436.</p>
+      </div>
+      <div class="copyright">
+        &copy; Daniil Baturin, 2013. Distributed under the terms of
+        <a href="http://opensource.org/licenses/MIT">MIT license</a>.
+        <br />
+        This page is standalone and thus mirror-friendly.
+        <br />
+        Visit <a href="https://github.com/dmbaturin/encapcalc">https://github.com/dmbaturin/encapcalc</a>
+        to get the source.
+      </div>
+    </div>
+  </body>
+</html>
