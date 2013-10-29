@@ -9,3 +9,5 @@ automated and more visual.
 
 To deploy locally, just copy the index.html to
 appropriate location.
+
+See a live demo at http://baturin.org/tools/encapcalc/
