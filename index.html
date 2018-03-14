@@ -1,9 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
 
 <!--
 
-Copyright (c) 2013 Daniil Baturin
+Copyright (c) 2013 Daniil Baturin and others
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,24 +24,33 @@ THE SOFTWARE.
 
 -->
 
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<html lang="en">
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Encapsulation overhead calculator</title>
-    <style type="text/css">
+    <style>
 
-      .wrapper
-      {
-          width: 1000px;
-          margin: 0 auto;
-      }
+     .protocol-form
+     {
+         float: left;
+         width: 30%;
+     }
 
       .box-wrapper
       {
-          width: 100%;
+          width: 60%;
           float: left;
           border: #dadada solid 1px;
-          margin-top: 30px;
+          margin-bottom: 30px;
           padding: 10px;
+      }
+
+      .notes { width: 100%; float: left; }
+
+      .wrapper
+      {
+          max-width: 1000px;
+          margin: 0 auto;
       }
 
       .protocol-block-wrapper
@@ -63,12 +71,19 @@ THE SOFTWARE.
           margin-right: auto;
        }
 
-      .float-left
+      .protocol-button
+      {
+          width: 80%;
+          margin-bottom: 3%;
+          padding: 1%;
+      }
+
+      .protocol-text
       {
           float: left;
       }
 
-      .float-right
+      .remove-button
       {
           float: right;
       }
@@ -81,11 +96,8 @@ THE SOFTWARE.
           padding-top: 20px;
           margin-bottom: 20px;
       }
-
     </style>
-    <script type="text/javascript">
-      //<![CDATA[
-
+    <script>
       protocol_hash = {
           "Ethernet": 14,
           "802.1q VLAN": 4,
@@ -95,15 +107,14 @@ THE SOFTWARE.
           "IPv4": 20,
           "IPv6": 40,
           "GRE": 4,
-          "GRE with key OR sequence numbers": 8,
-          "GRE with key AND sequence numbers": 12,
+          "GRE key/sequence number": 8,
           "UDP": 8,
           "TCP": 20,
           "VXLAN": 50,
           "NVGRE": 42,
           "STT": 54,
-          "ESP with 96 bit HMAC": 38,
-          "AH with 96 bit HMAC": 24
+          "ESP (96 bit HMAC)": 38,
+          "AH (96 bit HMAC)": 24
       };
 
       function calculate_overhead()
@@ -119,27 +130,37 @@ THE SOFTWARE.
              overhead = overhead + protocol_hash[protocols[i].innerHTML];
           }
 
-          pdu = mtu - overhead;
+          mode = document.ifaceoptions.mode.value;
+
+          if(mode == "sub")
+          {
+              pdu = Number(mtu) - Number(overhead);
+          }
+          else
+          {
+              pdu = Number(mtu) + Number(overhead);
+          }
 
           document.getElementById("overhead").innerHTML = overhead + " bytes";
           document.getElementById("tunnel-mtu").innerHTML = pdu + " bytes" ;
 
       }
 
-      function generate_proto_dropdown()
+      function generate_proto_form()
       {
-          dropdown = document.getElementById("protocol-list");
+          protocol_list = document.getElementById("protocol-list");
 
           for( protocol_name in protocol_hash )
           {
-              option = document.createElement("option");
-              option.innerHTML = protocol_name;
+              button = document.createElement("input");
+              button.setAttribute('type', 'button');
+              button.setAttribute('onclick', 'add_protocol(this.value)');
+              button.setAttribute('value', protocol_name);
+              button.setAttribute('class', 'protocol-button');
               
-              dropdown.appendChild(option);
+              protocol_list.appendChild(button);
           }
       }
-
-      function expand(id) { document.getElementById(id).display = "" }
 
       function add_protocol(name)
       {
@@ -156,8 +177,8 @@ THE SOFTWARE.
 
           protocol_wrapper.appendChild(protocol); 
 
-          content = "<div class='float-left'> <span class='protocol-name'>" + name + "</span> (" + protocol_hash[name] + " bytes) </div>";
-          content += "<div class='float-right'> <input type='button' value='Remove' onclick='remove_element(" + serial.value + ")'/> </div> ";
+          content = "<div class='protocol-text'> <span class='protocol-name'>" + name + "</span> (" + protocol_hash[name] + " bytes) </div>";
+          content += "<div class='remove-button'> <input type='button' value='Remove' onclick='remove_element(" + serial.value + ")'/> </div>";
           protocol.innerHTML = content;
           
           protocols.appendChild(protocol_wrapper);
@@ -177,40 +198,54 @@ THE SOFTWARE.
           calculate_overhead();
       }
 
-      //]]>
+      function set_mode_add()
+      {
+          document.getElementById("mtu-desc").innerHTML = "Payload size: ";
+          document.getElementById("result-desc").innerHTML = "Frame size: "
+      }
+
+      function set_mode_substract()
+      {
+       	  document.getElementById("mtu-desc").innerHTML	= "Parent interface MTU: ";
+          document.getElementById("result-desc").innerHTML = "Maximum PDU size: "
+      }
     </script>
   </head>
-  <body onload="generate_proto_dropdown()">
+  <body onload="generate_proto_form(); calculate_overhead();">
     <div class="wrapper">
       <div class="content">
         <h1> Encapsulation overhead calculator </h1>
-        <div class="box-wrapper">
-          <form action="#">
-            <h3>Choose protocol</h3>
-            <div>
-              <input id="serial" type="hidden" value="0" /> <!-- Dirty hack to ensure protocol block uniqueness -->
-              <select name="protocol" id="protocol-list">
+        <div class="protocol-form">
+              <!-- Dirty hack to ensure protocol block uniqueness -->
+              <input id="serial" type="hidden" value="0" />
+              <div id="protocol-list">
                 <!-- Generated content here -->
-              </select>
-              <input type="button" value="Add" onclick="add_protocol(document.getElementById('protocol-list').value)" />
-              <br /> <br />
-              <span>Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" />
-            </div>
-          </form>
+              </div>
         </div>
       </div>
-      <div class="box-wrapper protocol-wrapper">
-        <div id="protocols">
-          <span>Protocols:</span>
-            <!-- Generated content here -->
-        </div>
+      <div class="box-wrapper">
+      <form name="ifaceoptions">
+          <span id="mtu-desc">Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" oninput="calculate_overhead()" />
+          <br />
+          <span>Calculation mode:</spam>
+          <br />
+          <input name="mode" type="radio" value="sub" checked="checked" onchange="set_mode_substract(); calculate_overhead()"> PDU size (substract overhead from MTU)
+          <br />
+          <input name="mode" type="radio" value="add" onchange="set_mode_add(); calculate_overhead()"> Frame size (add overhead to payload size)
+      </form>
       </div>
       <div class="box-wrapper">
         Overhead: <span id="overhead"></span>
         <br />
-        PDU size: <span id="tunnel-mtu"></span>
+        <span id="result-desc"> Maximum PDU size: </span> <span id="tunnel-mtu"></span>
       </div>
       <div class="box-wrapper">
+        <div id="protocols">
+          <span>Protocols (click protocol buttons one or more time to add):</span>
+            <!-- Generated content here -->
+        </div>
+      </div>
+      <div class="notes">
         <h3>Notes</h3>
         <p>PDU (Protocol Data Unit) is a general term for frames, packets, segments etc.</p>
         <p>If you want to calculate tunnel MTU, specify protocols before the encapsulated one. That is,
@@ -236,7 +271,7 @@ THE SOFTWARE.
            TCP payload must not exceed 1436.</p>
       </div>
       <div class="copyright">
-        &copy; Daniil Baturin, 2013. Distributed under the terms of
+        &copy; <a href="https://baturin.org">Daniil Baturin</a> and contributors 2013, 2018. Distributed under the terms of
         <a href="http://opensource.org/licenses/MIT">MIT license</a>.
         <br />
         This page is standalone and thus mirror-friendly.
