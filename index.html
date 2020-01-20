@@ -115,7 +115,8 @@ THE SOFTWARE.
           "NVGRE": 42,
           "STT": 54,
           "ESP (96 bit HMAC)": 38,
-          "AH (96 bit HMAC)": 24
+          "AH (96 bit HMAC)": 24,
+          "L2TPv3": 8
       };
 
       function calculate_overhead()
@@ -230,7 +231,7 @@ THE SOFTWARE.
           <br />
           <span>Calculation mode:</spam>
           <br />
-          <input name="mode" type="radio" value="sub" checked="checked" onchange="set_mode_substract(); calculate_overhead()"> PDU size (substract overhead from MTU)
+          <input name="mode" type="radio" value="sub" checked="checked" onchange="set_mode_substract(); calculate_overhead()"> PDU size (subtract overhead from MTU)
           <br />
           <input name="mode" type="radio" value="add" onchange="set_mode_add(); calculate_overhead()"> Frame size (add overhead to payload size)
       </form>
@@ -272,7 +273,7 @@ THE SOFTWARE.
            TCP payload must not exceed 1436.</p>
       </div>
       <div class="copyright">
-        &copy; <a href="https://baturin.org">Daniil Baturin</a> and contributors 2013, 2018. Distributed under the terms of
+        &copy; <a href="https://baturin.org">Daniil Baturin</a> and contributors 2013-2020. Distributed under the terms of
         <a href="http://opensource.org/licenses/MIT">MIT license</a>.
         <br />
         This page is standalone and thus mirror-friendly.
