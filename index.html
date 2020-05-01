@@ -116,7 +116,8 @@ THE SOFTWARE.
           "STT": 54,
           "ESP (96 bit HMAC)": 38,
           "AH (96 bit HMAC)": 24,
-          "L2TPv3": 8
+          "L2TPv3": 8,
+          "WireGuard": 40
       };
 
       function calculate_overhead()
@@ -260,6 +261,8 @@ THE SOFTWARE.
            If you want to encapsulate the whole frame into a pseudowire, add Ethernet, VLAN, and QinQ.</p>
         <p>IPIP and IP6IP6 (and mixed) encapsulations do not use any specific headers, they are just IPv4 or IPv6
            packets sent as IPv4 or IPv6 payload. So for IPIP just add IPv4 twice, for IPIP6 add IPv4 and IPv6 etc.</p>
+        <p>WireGuard encapsulation includes the UDP header. Add IPv4 or IPv6 for <em>WireGuard over IPv4</em>
+           or <em>WireGuard over IPv6</em>.
         <p>This calculator does not check if specified encapsulation is any practical, if implementations exist, or if
            protocols are in "correct order". In theory you can encapsulate anything in anything, in practice it usually
            turns out there is even a valid a use case for it, so it just sums up header size. </p>
@@ -271,10 +274,15 @@ THE SOFTWARE.
         <p><strong>MSS for the above example.</strong> <br/>
            To get MSS, we need to add IPv4 and TCP after those IPv4 and GRE. MSS will be 1436 (1476 - 20 - 20), which means
            TCP payload must not exceed 1436.</p>
+        <p><strong>IPv6 WireGuard over PPPoE, parent interface MTU is 1500</strong><br />
+          We setup a <a href="https://wireguard.com/">WireGuard</a> connection using IPv6 addressing over PPPoE. The UDP header
+          is already included in the calculator, so we only have to add PPPoE (8 bytes), IPv6 (40 bytes), and of course
+          WireGuard (40 bytes). The tunnel MTU becomes 1412 (1500 - 8 - 40 - 40).
       </div>
       <div class="copyright">
         &copy; <a href="https://baturin.org">Daniil Baturin</a> and contributors 2013-2020. Distributed under the terms of
-        <a href="http://opensource.org/licenses/MIT">MIT license</a>.
+        <a href="http://opensource.org/licenses/MIT">MIT license</a>.<br />
+        "WireGuard" is a registered trademark of Jason A. Donenfeld.
         <br />
         This page is standalone and thus mirror-friendly.
         <br />
