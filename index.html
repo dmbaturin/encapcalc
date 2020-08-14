@@ -83,6 +83,8 @@ THE SOFTWARE.
           float: left;
       }
 
+      .protocol-options { float: left; width: 100%; }
+
       .remove-button
       {
           float: right;
@@ -98,16 +100,17 @@ THE SOFTWARE.
       }
     </style>
     <script>
-      protocolHash = {
+      // Base protocols that get auto-generated buttons
+      var baseProtocols = {
           "Ethernet": 14,
           "802.1q VLAN": 4,
           "802.1ad QinQ": 4,
+          "MACSec": 32,
           "MPLS": 4,
           "PPPoE": 8,
           "IPv4": 20,
           "IPv6": 40,
           "GRE": 4,
-          "GRE key/sequence number": 8,
           "EoIP": 42,
           "UDP": 8,
           "TCP": 20,
@@ -116,18 +119,34 @@ THE SOFTWARE.
           "STT": 54,
           "L2TPv3": 8,
           "WireGuard": 40,
-          "MACSec": 32
-      };
+       };
+
+       // These are additional options
+       var virtualProtocols = {
+           "GRE-key": 8,
+           "GRE-sequence-number": 8
+       };
+
+       // Forms with options for specific protocols
+       protocolOptions = {
+           "GRE": "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-key'> Key (8 bytes)</div>" +
+                  "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-sequence-number'> Sequence numbers (8 bytes)</div>"
+       };
 
       function calculateOverhead() {
           mtu = document.querySelector("#parent-mtu").value;
 
-          protocols = document.querySelectorAll(".protocol-name");
+          var protocols = document.querySelectorAll("*[class^='protocol-item-']");
 
-          overhead = 0;
+          var overhead = 0;
 
           for(var i = 0; i < protocols.length; i++) {
-             overhead = overhead + protocolHash[protocols[i].innerHTML];
+              var p = protocols[i];
+              if(p.tagName.toLowerCase() == "input") {
+                  if(!p.checked) { continue; }
+              }
+              protocolName = protocols[i].className.replace(/^protocol-item-/, '');
+              overhead += window.protocolData[protocolName];
           }
 
           mode = document.ifaceoptions.mode.value;
@@ -140,7 +159,6 @@ THE SOFTWARE.
 
           document.querySelector("#overhead").innerHTML = overhead + " bytes";
           document.querySelector("#tunnel-mtu").innerHTML = pdu + " bytes";
-
       }
 
       function handleEvent(e, f) {
@@ -151,7 +169,7 @@ THE SOFTWARE.
       function generateProtocolButtons() {
           protocolList = document.querySelector("#protocol-list");
 
-          for(protocolName in protocolHash) {
+          for(protocolName in baseProtocols) {
               var button = document.createElement("input");
               button.setAttribute('type', 'button');
               button.setAttribute('value', protocolName);
@@ -176,9 +194,16 @@ THE SOFTWARE.
 
           protocolWrapper.appendChild(protocol);
 
-          content = "<div class='protocol-text'> <span class='protocol-name'>" + name + "</span> (" + protocolHash[name] + " bytes) </div>";
+          content = "<div class='protocol-text'> <span class='protocol-item-" + name + "'>" + name + "</span> (" + window.protocolData[name] + " bytes) </div>";
           content += "<div class='remove-button'> <input type='button' value='Remove'/> </div>";
-          protocol.innerHTML = content;
+
+          protocol.innerHTML = "<div class='protocol-options'>" + content + "</div>";
+
+          if(protocolOptions[name]) {
+              optionsForm = document.createElement("div");
+              optionsForm.innerHTML = protocolOptions[name];
+              protocol.appendChild(optionsForm);
+          }
 
           var serial = window.serial; // Force lexical scoping
           protocol.querySelector("div.remove-button input").addEventListener("click", function (e) {
@@ -192,7 +217,6 @@ THE SOFTWARE.
       // Since all UI changes require re-calculating the values,
       // we wrap all events in a handler that forces re-calculation.
       function removeElement(id) {
-          console.log(id);
           element = document.getElementById(id);
           element.parentNode.removeChild(element);
       }
@@ -207,6 +231,15 @@ THE SOFTWARE.
           document.querySelector("#result-desc").innerHTML = "Maximum PDU size: ";
       }
 
+      function mergeObjects(l, r){
+          for (var key in r){
+              if(r.hasOwnProperty(key)){
+                  l[key] = r[key];
+              }
+          }
+         return l;
+      }
+
       document.addEventListener("DOMContentLoaded", function () {
           // Dirty hack to ensure protocol block id uniqueness
           // Incremented every time when user adds a protocol
@@ -217,6 +250,8 @@ THE SOFTWARE.
           document.querySelector("#parent-mtu").addEventListener("input", calculateOverhead);
           document.querySelector("#mode-pdu").addEventListener("change", function (e) {handleEvent(e, setModePDU)});
           document.querySelector("#mode-frame-size").addEventListener("change", function (e) {handleEvent(e, setModeFrameSize)});
+
+          window.protocolData = mergeObjects(baseProtocols, virtualProtocols);
 
           calculateOverhead();
       });
