@@ -2,7 +2,7 @@
 
 <!--
 
-Copyright (c) 2013 Daniil Baturin and others
+Copyright (c) 2020 Daniil Baturin and others
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -98,7 +98,7 @@ THE SOFTWARE.
       }
     </style>
     <script>
-      protocol_hash = {
+      protocolHash = {
           "Ethernet": 14,
           "802.1q VLAN": 4,
           "802.1ad QinQ": 4,
@@ -119,107 +119,114 @@ THE SOFTWARE.
           "MACSec": 32
       };
 
-      function calculate_overhead()
-      {
-          mtu = document.getElementById("parent-mtu").value;
+      function calculateOverhead() {
+          mtu = document.querySelector("#parent-mtu").value;
 
-          protocols = document.getElementsByClassName("protocol-name");
+          protocols = document.querySelectorAll(".protocol-name");
 
           overhead = 0;
 
-          for(var i = 0; i < protocols.length; i++)
-          {
-             overhead = overhead + protocol_hash[protocols[i].innerHTML];
+          for(var i = 0; i < protocols.length; i++) {
+             overhead = overhead + protocolHash[protocols[i].innerHTML];
           }
 
           mode = document.ifaceoptions.mode.value;
 
-          if(mode == "sub")
-          {
+          if(mode == "sub") {
               pdu = Number(mtu) - Number(overhead);
-          }
-          else
-          {
+          } else {
               pdu = Number(mtu) + Number(overhead);
           }
 
-          document.getElementById("overhead").innerHTML = overhead + " bytes";
-          document.getElementById("tunnel-mtu").innerHTML = pdu + " bytes" ;
+          document.querySelector("#overhead").innerHTML = overhead + " bytes";
+          document.querySelector("#tunnel-mtu").innerHTML = pdu + " bytes";
 
       }
 
-      function generate_proto_form()
-      {
-          protocol_list = document.getElementById("protocol-list");
+      function handleEvent(e, f) {
+          f(e);
+          calculateOverhead();
+      }
 
-          for( protocol_name in protocol_hash )
-          {
-              button = document.createElement("input");
+      function generateProtocolButtons() {
+          protocolList = document.querySelector("#protocol-list");
+
+          for(protocolName in protocolHash) {
+              var button = document.createElement("input");
               button.setAttribute('type', 'button');
-              button.setAttribute('onclick', 'add_protocol(this.value)');
-              button.setAttribute('value', protocol_name);
+              button.setAttribute('value', protocolName);
               button.setAttribute('class', 'protocol-button');
+
+              button.addEventListener("click", function (e) {
+                  handleEvent(e, function () {addProtocol(e.target.value)})});
               
-              protocol_list.appendChild(button);
+              protocolList.appendChild(button);
           }
       }
 
-      function add_protocol(name)
-      {
-          serial = document.getElementById("serial");
+      function addProtocol(name) {
+          protocols = document.querySelector('#protocols');
 
-          protocols = document.getElementById('protocols');
-
-          protocol_wrapper = document.createElement('div');
-          protocol_wrapper.setAttribute('class', 'protocol-block-wrapper');
-          protocol_wrapper.setAttribute('id', serial.value);
+          protocolWrapper = document.createElement('div');
+          protocolWrapper.setAttribute('class', 'protocol-block-wrapper');
+          protocolWrapper.setAttribute('id', window.serial);
 
           protocol = document.createElement('div');
           protocol.setAttribute('class', 'protocol-block');
 
-          protocol_wrapper.appendChild(protocol); 
+          protocolWrapper.appendChild(protocol);
 
-          content = "<div class='protocol-text'> <span class='protocol-name'>" + name + "</span> (" + protocol_hash[name] + " bytes) </div>";
-          content += "<div class='remove-button'> <input type='button' value='Remove' onclick='remove_element(" + serial.value + ")'/> </div>";
+          content = "<div class='protocol-text'> <span class='protocol-name'>" + name + "</span> (" + protocolHash[name] + " bytes) </div>";
+          content += "<div class='remove-button'> <input type='button' value='Remove'/> </div>";
           protocol.innerHTML = content;
-          
-          protocols.appendChild(protocol_wrapper);
-         
 
-          document.getElementById("serial").value = parseInt(serial.value) + 1;
+          var serial = window.serial; // Force lexical scoping
+          protocol.querySelector("div.remove-button input").addEventListener("click", function (e) {
+              handleEvent(e, function () {removeElement(serial)})});
 
-          calculate_overhead();
+          protocols.appendChild(protocolWrapper);
 
+          window.serial += 1;
       }
 
-      function remove_element(id)
-      {
+      // Since all UI changes require re-calculating the values,
+      // we wrap all events in a handler that forces re-calculation.
+      function removeElement(id) {
+          console.log(id);
           element = document.getElementById(id);
           element.parentNode.removeChild(element);
-
-          calculate_overhead();
       }
 
-      function set_mode_add()
-      {
-          document.getElementById("mtu-desc").innerHTML = "Payload size: ";
-          document.getElementById("result-desc").innerHTML = "Frame size: "
+      function setModeFrameSize() {
+          document.querySelector("#mtu-desc").innerHTML = "Payload size: ";
+          document.querySelector("#result-desc").innerHTML = "Frame size: "
       }
 
-      function set_mode_substract()
-      {
-       	  document.getElementById("mtu-desc").innerHTML	= "Parent interface MTU: ";
-          document.getElementById("result-desc").innerHTML = "Maximum PDU size: "
+      function setModePDU() {
+          document.querySelector("#mtu-desc").innerHTML = "Parent interface MTU: ";
+          document.querySelector("#result-desc").innerHTML = "Maximum PDU size: ";
       }
+
+      document.addEventListener("DOMContentLoaded", function () {
+          // Dirty hack to ensure protocol block id uniqueness
+          // Incremented every time when user adds a protocol
+          // Other solutions would be dependent on the protocol block layout
+          window.serial = 0;
+
+          generateProtocolButtons();
+          document.querySelector("#parent-mtu").addEventListener("input", calculateOverhead);
+          document.querySelector("#mode-pdu").addEventListener("change", function (e) {handleEvent(e, setModePDU)});
+          document.querySelector("#mode-frame-size").addEventListener("change", function (e) {handleEvent(e, setModeFrameSize)});
+
+          calculateOverhead();
+      });
     </script>
   </head>
-  <body onload="generate_proto_form(); calculate_overhead();">
+  <body>
     <div class="wrapper">
       <div class="content">
         <h1> Encapsulation overhead calculator </h1>
         <div class="protocol-form">
-              <!-- Dirty hack to ensure protocol block uniqueness -->
-              <input id="serial" type="hidden" value="0" />
               <div id="protocol-list">
                 <!-- Generated content here -->
               </div>
@@ -227,13 +234,13 @@ THE SOFTWARE.
       </div>
       <div class="box-wrapper">
       <form name="ifaceoptions">
-          <span id="mtu-desc">Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" oninput="calculate_overhead()" />
+          <span id="mtu-desc">Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" />
           <br />
           <span>Calculation mode:</spam>
           <br />
-          <input name="mode" type="radio" value="sub" checked="checked" onchange="set_mode_substract(); calculate_overhead()"> PDU size (subtract overhead from MTU)
+          <input id="mode-pdu" name="mode" type="radio" value="sub" checked="checked"> PDU size (subtract overhead from MTU)
           <br />
-          <input name="mode" type="radio" value="add" onchange="set_mode_add(); calculate_overhead()"> Frame size (add overhead to payload size)
+          <input id="mode-frame-size" name="mode" type="radio" value="add"> Frame size (add overhead to payload size)
       </form>
       </div>
       <div class="box-wrapper">
