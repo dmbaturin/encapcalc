@@ -29,6 +29,7 @@ THE SOFTWARE.
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Encapsulation overhead calculator</title>
     <style>
+     summary { cursor: pointer; }
 
      .protocol-form
      {
@@ -267,17 +268,20 @@ THE SOFTWARE.
               </div>
         </div>
       </div>
-      <div class="box-wrapper">
-      <form name="ifaceoptions">
-          <span id="mtu-desc">Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" />
-          <br />
-          <span>Calculation mode:</spam>
-          <br />
-          <input id="mode-pdu" name="mode" type="radio" value="sub" checked="checked"> PDU size (subtract overhead from MTU)
-          <br />
-          <input id="mode-frame-size" name="mode" type="radio" value="add"> Frame size (add overhead to payload size)
-      </form>
-      </div>
+      <details>
+        <summary>Options</summary>
+        <div class="box-wrapper">
+          <form name="ifaceoptions">
+            <span id="mtu-desc">Parent interface MTU: </span> <input type="text" value="1500" id="parent-mtu" />
+            <br />
+            <span>Calculation mode:</spam>
+            <br />
+            <input id="mode-pdu" name="mode" type="radio" value="sub" checked="checked"> PDU size (subtract overhead from MTU)
+            <br />
+            <input id="mode-frame-size" name="mode" type="radio" value="add"> Frame size (add overhead to payload size)
+          </form>
+        </div>
+      </details>
       <div class="box-wrapper">
         Overhead: <span id="overhead"></span>
         <br />
