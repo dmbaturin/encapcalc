@@ -112,7 +112,6 @@ THE SOFTWARE.
           "IPv4": 20,
           "IPv6": 40,
           "GRE": 4,
-          "EoIP": 42,
           "UDP": 8,
           "TCP": 20,
           "VXLAN": 50,
@@ -126,6 +125,12 @@ THE SOFTWARE.
        var virtualProtocols = {
            "GRE-key": 8,
            "GRE-sequence-number": 8
+       };
+
+       var protocolShortcuts = {
+           "EoIP": ["IPv4", "GRE", "Ethernet"],
+           "IPIP": ["IPv4", "IPv4"],
+           "SIT (6in4)": ["IPv4", "IPv6"]
        };
 
        // Forms with options for specific protocols
@@ -170,6 +175,7 @@ THE SOFTWARE.
       function generateProtocolButtons() {
           protocolList = document.querySelector("#protocol-list");
 
+          // Add base protocols
           for(protocolName in baseProtocols) {
               var button = document.createElement("input");
               button.setAttribute('type', 'button');
@@ -181,6 +187,22 @@ THE SOFTWARE.
               
               protocolList.appendChild(button);
           }
+
+          // Add shortcuts for complex protocols
+          var protocolShortcutBlock = document.createElement("details");
+          protocolShortcutBlock.innerHTML = "<summary>More</summary>";
+          for(ps in protocolShortcuts) {
+              var button = document.createElement("input");
+              button.setAttribute('type', 'button');
+              button.setAttribute('value', ps);
+              button.setAttribute('class', 'protocol-button');
+
+              button.addEventListener("click", function (e) {
+                  handleEvent(e, function () {addProtocols(e.target.value)})});
+
+              protocolShortcutBlock.appendChild(button);
+          }
+          protocolList.appendChild(protocolShortcutBlock);
       }
 
       function addProtocol(name) {
@@ -213,6 +235,11 @@ THE SOFTWARE.
           protocols.appendChild(protocolWrapper);
 
           window.serial += 1;
+      }
+
+      function addProtocols(name) {
+          var protos = window.protocolShortcuts[name];
+          protos.forEach(addProtocol);
       }
 
       // Since all UI changes require re-calculating the values,
@@ -253,6 +280,7 @@ THE SOFTWARE.
           document.querySelector("#mode-frame-size").addEventListener("change", function (e) {handleEvent(e, setModeFrameSize)});
 
           window.protocolData = mergeObjects(baseProtocols, virtualProtocols);
+          window.protocolShortcuts = protocolShortcuts;
 
           calculateOverhead();
       });
