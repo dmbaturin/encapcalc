@@ -1,0 +1,68 @@
+summary { cursor: pointer; }
+
+.protocol-form {
+  float: left;
+  width: 30%;
+}
+
+#protocol-list {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-around;
+  max-width: 15em;
+  margin-right: 10px;
+}
+
+.box-wrapper {
+  width: 60%;
+  float: left;
+  border: #dadada solid 1px;
+  margin-bottom: 30px;
+  padding: 10px;
+}
+
+.notes { width: 100%; float: left; }
+
+.wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.protocol-block-wrapper {
+  float: left;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.protocol-block {
+  width: 80%;
+  border: #0990BD solid 1px;
+  background-color: #E3ECEF;
+  padding: 10px;
+  float: left;
+  margin-left: 10%;
+  margin-right: auto;
+}
+
+.protocol-button {
+  margin: 3px;
+  padding: 1%;
+  min-width: 8em;
+}
+
+.protocol-text {
+  float: left;
+}
+
+.protocol-options { float: left; width: 100%; }
+
+.remove-button { float: right; }
+
+.copyright {
+  float: left;
+  width: 100%;
+  text-align: center;
+  padding-top: 20px;
+  margin-bottom: 20px;
+}

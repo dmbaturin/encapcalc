@@ -27,269 +27,14 @@ THE SOFTWARE.
 <html lang="en">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Encapsulation overhead calculator</title>
-    <style>
-     summary { cursor: pointer; }
-
-     .protocol-form
-     {
-         float: left;
-         width: 30%;
-     }
-
-      .box-wrapper
-      {
-          width: 60%;
-          float: left;
-          border: #dadada solid 1px;
-          margin-bottom: 30px;
-          padding: 10px;
-      }
-
-      .notes { width: 100%; float: left; }
-
-      .wrapper
-      {
-          max-width: 1000px;
-          margin: 0 auto;
-      }
-
-      .protocol-block-wrapper
-      {
-          float: left;
-          width: 100%;
-          margin-top: 15px;
-      }
-
-      .protocol-block
-      {
-          width: 80%;
-          border: #0990BD solid 1px;
-          background-color: #E3ECEF;
-          padding: 10px;
-          float: left;
-          margin-left: 10%;
-          margin-right: auto;
-       }
-
-      .protocol-button
-      {
-          width: 80%;
-          margin-bottom: 3%;
-          padding: 1%;
-      }
-
-      .protocol-text
-      {
-          float: left;
-      }
-
-      .protocol-options { float: left; width: 100%; }
-
-      .remove-button
-      {
-          float: right;
-      }
-
-      .copyright
-      {
-          float: left;
-          width: 100%;
-          text-align: center;
-          padding-top: 20px;
-          margin-bottom: 20px;
-      }
-    </style>
-    <script>
-      // Base protocols that get auto-generated buttons
-      var baseProtocols = {
-          "Ethernet": 14,
-          "802.1q VLAN": 4,
-          "802.1ad QinQ": 4,
-          "MACSec": 32,
-          "MPLS": 4,
-          "PPPoE": 8,
-          "L2TPv3": 8,
-          "IPv4": 20,
-          "IPv6": 40,
-          "GRE": 4,
-          "UDP": 8,
-          "TCP": 20,
-          "VXLAN + UDP": 16,
-          "NVGRE": 8,
-          "STT + TCP": 38,
-          "WireGuard + UDP": 40,
-       };
-
-       // These are additional options
-       var virtualProtocols = {
-           "GRE-key": 4,
-           "GRE-sequence-number": 4
-       };
-
-       var protocolShortcuts = {
-           "EoIP": ["IPv4", "GRE", "Ethernet"],
-           "IPIP": ["IPv4", "IPv4"],
-           "SIT (6in4)": ["IPv4", "IPv6"]
-       };
-
-       // Forms with options for specific protocols
-       protocolOptions = {
-           "GRE": "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-key'> Key (4 bytes)</div>" +
-                  "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-sequence-number'> Sequence numbers (4 bytes)</div>"
-       };
-
-      function calculateOverhead() {
-          mtu = document.querySelector("#parent-mtu").value;
-
-          var protocols = document.querySelectorAll("*[class^='protocol-item-']");
-
-          var overhead = 0;
-
-          for(var i = 0; i < protocols.length; i++) {
-              var p = protocols[i];
-              if(p.tagName.toLowerCase() == "input") {
-                  if(!p.checked) { continue; }
-              }
-              protocolName = protocols[i].className.replace(/^protocol-item-/, '');
-              overhead += window.protocolData[protocolName];
-          }
-
-          mode = document.ifaceoptions.mode.value;
-
-          if(mode == "sub") {
-              pdu = Number(mtu) - Number(overhead);
-          } else {
-              pdu = Number(mtu) + Number(overhead);
-          }
-
-          document.querySelector("#overhead").innerHTML = overhead + " bytes";
-          document.querySelector("#tunnel-mtu").innerHTML = pdu + " bytes";
-      }
-
-      function handleEvent(e, f) {
-          f(e);
-          calculateOverhead();
-      }
-
-      function generateProtocolButtons() {
-          protocolList = document.querySelector("#protocol-list");
-
-          // Add base protocols
-          for(protocolName in baseProtocols) {
-              var button = document.createElement("input");
-              button.setAttribute('type', 'button');
-              button.setAttribute('value', protocolName);
-              button.setAttribute('class', 'protocol-button');
-
-              button.addEventListener("click", function (e) {
-                  handleEvent(e, function () {addProtocol(e.target.value)})});
-              
-              protocolList.appendChild(button);
-          }
-
-          // Add shortcuts for complex protocols
-          var protocolShortcutBlock = document.createElement("details");
-          protocolShortcutBlock.innerHTML = "<summary>More</summary>";
-          for(ps in protocolShortcuts) {
-              var button = document.createElement("input");
-              button.setAttribute('type', 'button');
-              button.setAttribute('value', ps);
-              button.setAttribute('class', 'protocol-button');
-
-              button.addEventListener("click", function (e) {
-                  handleEvent(e, function () {addProtocols(e.target.value)})});
-
-              protocolShortcutBlock.appendChild(button);
-          }
-          protocolList.appendChild(protocolShortcutBlock);
-      }
-
-      function addProtocol(name) {
-          protocols = document.querySelector('#protocols');
-
-          protocolWrapper = document.createElement('div');
-          protocolWrapper.setAttribute('class', 'protocol-block-wrapper');
-          protocolWrapper.setAttribute('id', window.serial);
-
-          protocol = document.createElement('div');
-          protocol.setAttribute('class', 'protocol-block');
-
-          protocolWrapper.appendChild(protocol);
-
-          content = "<div class='protocol-text'> <span class='protocol-item-" + name + "'>" + name + "</span> (" + window.protocolData[name] + " bytes) </div>";
-          content += "<div class='remove-button'> <input type='button' value='Remove'/> </div>";
-
-          protocol.innerHTML = "<div class='protocol-options'>" + content + "</div>";
-
-          if(protocolOptions[name]) {
-              optionsForm = document.createElement("div");
-              optionsForm.innerHTML = protocolOptions[name];
-              protocol.appendChild(optionsForm);
-          }
-
-          var serial = window.serial; // Force lexical scoping
-          protocol.querySelector("div.remove-button input").addEventListener("click", function (e) {
-              handleEvent(e, function () {removeElement(serial)})});
-
-          protocols.appendChild(protocolWrapper);
-
-          window.serial += 1;
-      }
-
-      function addProtocols(name) {
-          var protos = window.protocolShortcuts[name];
-          protos.forEach(addProtocol);
-      }
-
-      // Since all UI changes require re-calculating the values,
-      // we wrap all events in a handler that forces re-calculation.
-      function removeElement(id) {
-          element = document.getElementById(id);
-          element.parentNode.removeChild(element);
-      }
-
-      function setModeFrameSize() {
-          document.querySelector("#mtu-desc").innerHTML = "Payload size: ";
-          document.querySelector("#result-desc").innerHTML = "Frame size: "
-      }
-
-      function setModePDU() {
-          document.querySelector("#mtu-desc").innerHTML = "Parent interface MTU: ";
-          document.querySelector("#result-desc").innerHTML = "Maximum PDU size: ";
-      }
-
-      function mergeObjects(l, r){
-          for (var key in r){
-              if(r.hasOwnProperty(key)){
-                  l[key] = r[key];
-              }
-          }
-         return l;
-      }
-
-      document.addEventListener("DOMContentLoaded", function () {
-          // Dirty hack to ensure protocol block id uniqueness
-          // Incremented every time when user adds a protocol
-          // Other solutions would be dependent on the protocol block layout
-          window.serial = 0;
-
-          generateProtocolButtons();
-          document.querySelector("#parent-mtu").addEventListener("input", calculateOverhead);
-          document.querySelector("#mode-pdu").addEventListener("change", function (e) {handleEvent(e, setModePDU)});
-          document.querySelector("#mode-frame-size").addEventListener("change", function (e) {handleEvent(e, setModeFrameSize)});
-
-          window.protocolData = mergeObjects(baseProtocols, virtualProtocols);
-          window.protocolShortcuts = protocolShortcuts;
-
-          calculateOverhead();
-      });
-    </script>
+    <title>Visual packet size calculator</title>
+    <link rel="stylesheet" href="main.css">
+    <script src="encapcalc.js"> </script>
   </head>
   <body>
     <div class="wrapper">
       <div class="content">
-        <h1> Encapsulation overhead calculator </h1>
+        <h1>Visual packet size calculator</h1>
         <div class="protocol-form">
               <div id="protocol-list">
                 <!-- Generated content here -->
@@ -304,16 +49,16 @@ THE SOFTWARE.
             <br />
             <span>Calculation mode:</spam>
             <br />
-            <input id="mode-pdu" name="mode" type="radio" value="sub" checked="checked"> PDU size (subtract overhead from MTU)
+            <input id="mode-pdu" name="mode" type="radio" value="sub" checked="checked"> Encapculated protocol MTU (subtract overhead from the parent interface MTU)
             <br />
             <input id="mode-frame-size" name="mode" type="radio" value="add"> Frame size (add overhead to payload size)
           </form>
         </div>
       </details>
       <div class="box-wrapper">
-        Overhead: <span id="overhead"></span>
+        <strong>Header size (overhead):</strong> <span id="overhead"></span>
         <br />
-        <span id="result-desc"> Maximum PDU size: </span> <span id="tunnel-mtu"></span>
+        <span id="result-desc"><strong>MTU:</strong></span> <span id="tunnel-mtu"></span>
       </div>
       <div class="box-wrapper">
         <div id="protocols">
@@ -323,44 +68,26 @@ THE SOFTWARE.
       </div>
       <div class="notes">
         <h3>Notes</h3>
-        <p>PDU (Protocol Data Unit) is a general term for frames, packets, segments etc.</p>
-        <p>If you want to calculate tunnel MTU, specify protocols before the encapsulated one. That is,
-           if you want MTU for GRE over IPv4, add IPv4 and GRE. PDU value will be your MTU, whatever
-           you encapslate into GRE must not exceed that size.</p>
-        <p>If you want to calculate TCP MSS, add the underlying protocol and TCP after tunnel protocols. E.g. for TCP over IPv6
-            encapsulated into GRE over IPv4, add IPv4, GRE, IPv6, and TCP.</p>
-        <p>Protocol overhead values here are just what they add to the frame. E.g. if you want MTU for QinQ over physical
-           Ethernet links, just add QinQ, as your physical link MTU already takes Ethernet header and first VLAN tag into account.
-           If you want to encapsulate the whole frame into a pseudowire, add Ethernet, VLAN, and QinQ.</p>
-        <p>IPIP and IP6IP6 (and mixed) encapsulations do not use any specific headers, they are just IPv4 or IPv6
-           packets sent as IPv4 or IPv6 payload. So for IPIP just add IPv4 twice, for IPIP6 add IPv4 and IPv6 etc.</p>
-        <p>WireGuard encapsulation includes the UDP header. Add IPv4 or IPv6 for <em>WireGuard over IPv4</em>
-           or <em>WireGuard over IPv6</em>.
-        <p>This calculator does not check if specified encapsulation is any practical, if implementations exist, or if
-           protocols are in "correct order". In theory you can encapsulate anything in anything, in practice it usually
-           turns out there is even a valid a use case for it, so it just sums up header size. </p>
-        <h4>Examples</h4>
-        <p><strong>GRE over IPv4, encapsulates IPv4. We want tunnel MTU, parent interface MTU is 1500 </strong> <br/>
-           Parent interface MTU is maximum size of IPv4 packets it can transmit, not counting Ethernet frame headers.
-           So we only need to care about IPv4 and GRE, and we add IPv4 (20 bytes) and GRE (4 bytes). Tunnel MTU is 1476,
-           which means maximum size of encapsulated IPv4 packet must not exceed 1476 if we don't want it to be fragmented</p>
-        <p><strong>MSS for the above example.</strong> <br/>
-           To get MSS, we need to add IPv4 and TCP after those IPv4 and GRE. MSS will be 1436 (1476 - 20 - 20), which means
-           TCP payload must not exceed 1436.</p>
-        <p><strong>IPv6 WireGuard over PPPoE, parent interface MTU is 1500</strong><br />
-          We setup a <a href="https://wireguard.com/">WireGuard</a> connection using IPv6 addressing over PPPoE. The UDP header
-          is already included in the calculator, so we only have to add PPPoE (8 bytes), IPv6 (40 bytes), and of course
-          WireGuard (40 bytes). The tunnel MTU becomes 1412 (1500 - 8 - 40 - 40).
+        <p>
+          Knowing the encapsulation overhead of your protocol stack is important for configuring VPN tunnels.
+          You need to set the tunnel interface <abbr title="Maximum Transmission Unit">MTU</abbr> correctly, to avoid excessive packet fragmentation.
+        </p>
+        <p>
+          This tool allows you to easily see what each protocol adds to your packet. Click protocol buttons to add protocols to the stack.
+          Some protocols have additional options, e.g. if you click Ethernet, you will see VLAN and QinQ header option checkboxes.
+        </p>
+        <p>For example, if you want the TCP <abbr title="Maximum Segment Size">MSS</abbr> for IPv6 in GRE over IPv4, click: IPv4, GRE, IPv6, TCP.</p>
+        <p>
+          Header sizes for VXLAN, LISP, and WireGuard include UDP, and STT includes TCP, because these protocols never use another L4 protocol.
+          Everything else is pure header size exclusing any outer or inner protocols, e.g. &ldquo;MPLS&rdquo; is the size of a single MPLS label
+          (4 bytes).
+        </p>
       </div>
       <div class="copyright">
-        &copy; <a href="https://baturin.org">Daniil Baturin</a> and contributors 2013-2020. Distributed under the terms of
-        <a href="http://opensource.org/licenses/MIT">MIT license</a>.<br />
-        "WireGuard" is a registered trademark of Jason A. Donenfeld.
-        <br />
-        This page is standalone and thus mirror-friendly.
-        <br />
-        Visit <a href="https://github.com/dmbaturin/encapcalc">https://github.com/dmbaturin/encapcalc</a>
-        to get the source.
+         &copy; <a href="https://www.baturin.org">Daniil Baturin</a> and contributors, 2013-2020.<br><br>
+         <a href="https://mit-license.org/"> <img height="31" src="mit-license.svg" alt="MIT license"> </a>
+         <a href="https://github.com/dmbaturin/encapcalc"> <img height="31" src="github.svg" alt="GitHub"> </a>
+         <a href="https://www.buymeacoffee.com/dmbaturin" target="_blank"><img src="buymeacoffee.png" alt="Buy Me A Coffee" style="height: 31px !important;"></a>
       </div>
     </div>
   </body>
