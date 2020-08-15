@@ -109,22 +109,22 @@ THE SOFTWARE.
           "MACSec": 32,
           "MPLS": 4,
           "PPPoE": 8,
+          "L2TPv3": 8,
           "IPv4": 20,
           "IPv6": 40,
           "GRE": 4,
           "UDP": 8,
           "TCP": 20,
-          "VXLAN": 50,
-          "NVGRE": 42,
-          "STT": 54,
-          "L2TPv3": 8,
-          "WireGuard": 40,
+          "VXLAN + UDP": 16,
+          "NVGRE": 8,
+          "STT + TCP": 38,
+          "WireGuard + UDP": 40,
        };
 
        // These are additional options
        var virtualProtocols = {
-           "GRE-key": 8,
-           "GRE-sequence-number": 8
+           "GRE-key": 4,
+           "GRE-sequence-number": 4
        };
 
        var protocolShortcuts = {
@@ -135,8 +135,8 @@ THE SOFTWARE.
 
        // Forms with options for specific protocols
        protocolOptions = {
-           "GRE": "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-key'> Key (8 bytes)</div>" +
-                  "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-sequence-number'> Sequence numbers (8 bytes)</div>"
+           "GRE": "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-key'> Key (4 bytes)</div>" +
+                  "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-GRE-sequence-number'> Sequence numbers (4 bytes)</div>"
        };
 
       function calculateOverhead() {
