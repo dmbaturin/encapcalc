@@ -66,3 +66,8 @@ summary { cursor: pointer; }
   padding-top: 20px;
   margin-bottom: 20px;
 }
+
+body {
+  background: white;
+  color: black;
+}

@@ -68,7 +68,7 @@ function makeSharingLink() {
     if(protocolItems) {
         protocolItems.forEach(function (p) {
             if(protocolEnabled(p)) {
-                protocols.push(p.classList[0].replaceAll("protocol-item-", ""))
+                protocols.push(p.classList[0].replace("protocol-item-", ""))
             }
         });
     }
