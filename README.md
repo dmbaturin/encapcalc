@@ -21,3 +21,4 @@ See a live demo at http://baturin.org/tools/encapcalc/
 * STT: [RFC draft](https://tools.ietf.org/html/draft-davie-stt-01)
 * MACSec: "an additional 16-byte MACsec Security Tag or SecTAG was included, as well as a 16-byte Integrity Check Value (ICV) at the end of the frame" ([1](https://www.cisco.com/c/en/us/products/collateral/ios-nx-os-software/identity-based-networking-services/white-paper-c11-737544.html))
 * LISP: [RFC6830](https://tools.ietf.org/html/rfc6830)
+* EoIP: https://help.mikrotik.com/docs/pages/viewpage.action?pageId=24805521
