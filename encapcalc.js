@@ -62,6 +62,53 @@ protocolOptions = {
               "<div><input type='checkbox' onchange='calculateOverhead()' class='protocol-item-Ethernet-MACSec'>MACSec (32 bytes)</div>"
 };
 
+function makeSharingLink() {
+    var protocolItems = document.querySelectorAll("*[class^='protocol-item-']");
+    var protocols = [];
+    if(protocolItems) {
+        protocolItems.forEach(function (p) {
+            if(protocolEnabled(p)) {
+                protocols.push(p.classList[0].replaceAll("protocol-item-", ""))
+            }
+        });
+    }
+
+    if(protocols.length > 0) {
+        var protoString = protocols.join(",");
+        return `${window.location.origin}${window.location.pathname}?protocols=${protoString}`;
+    } else {
+        return null;
+    }
+}
+
+function updateSharingLink() {
+    var link = makeSharingLink();
+    var linkBox = document.querySelector("#share");
+    var linkElem = document.querySelector("#sharing-link");
+    if(link) {
+        linkElem.value = link;
+        linkBox.hidden = false;
+    } else {
+        linkBox.hidden = true;
+    }
+}
+
+function copySharingLink() {
+    var copyText = document.querySelector("#sharing-link");
+    copyText.select();
+    document.execCommand("copy");
+}
+
+function protocolEnabled(p) {
+    if(p.tagName.toLowerCase() == "input") {
+        // Protocol option checkbox
+        return p.checked;
+    } else {
+        // Normal protocol block, not an option
+        return true;
+    }
+}
+
 function calculateOverhead() {
     var mtu = document.querySelector("#parent-mtu").value;
     var protocols = document.querySelectorAll("*[class^='protocol-item-']");
@@ -69,9 +116,7 @@ function calculateOverhead() {
 
     for(var i = 0; i < protocols.length; i++) {
         var p = protocols[i];
-        if(p.tagName.toLowerCase() == "input") {
-            if(!p.checked) { continue; }
-        }
+        if(!protocolEnabled(p)) { continue; }
 
        protocolName = protocols[i].className.replace(/^protocol-item-/, '');
        overhead += window.protocolData[protocolName];
@@ -86,6 +131,8 @@ function calculateOverhead() {
 
     document.querySelector("#overhead").innerHTML = overhead + " bytes";
     document.querySelector("#tunnel-mtu").innerHTML = pdu + " bytes";
+
+    updateSharingLink();
 }
 
 // Since all UI changes require re-calculating the values,
@@ -153,6 +200,8 @@ function addProtocol(name) {
 
     protocols.appendChild(protocolWrapper);
     window.serial += 1;
+
+    return protocolWrapper;
 }
 
 function addProtocols(name) {
@@ -184,8 +233,12 @@ function mergeObjects(l, r) {
    return l;
 }
 
+
 // UI setup
 document.addEventListener("DOMContentLoaded", function () {
+    // The "share" button
+    document.querySelector("#copy-sharing-link").addEventListener("click", copySharingLink);
+
     // Dirty hack to ensure protocol block id uniqueness
     // Incremented every time when user adds a protocol
     // Other solutions would be dependent on the protocol block layout
@@ -198,6 +251,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
     window.protocolData = mergeObjects(baseProtocols, virtualProtocols);
     window.protocolShortcuts = protocolShortcuts;
+
+    // Support for "sharing" links
+    var query = new URLSearchParams(window.location.search);
+    if(query.has("protocols")) {
+        var protos = query.get("protocols").split(",");
+
+        // Dirty hack to enable setting protocol options
+        var currentItem = null;
+
+        if(protos) {
+            protos.forEach(function (p) {
+                var itemOption = null;
+                if(currentItem) {
+                    // Some protocols like Ethernet and GRE have options (keys, VLAN...)
+                    // They are implemented as inputs inside the protocol block
+                    var opt = currentItem.querySelector(`*[class^='protocol-item-${p}']`);
+                    if(opt) { itemOption = opt; }
+                }
+
+                // The current protocol is an option of the previous one, like GRE-key of GRE
+                // There's no support for non-checkbox options yet, so we just "check" it
+                if(itemOption) {
+                    itemOption.checked = 1;
+                } else {
+                    currentItem = addProtocol(p);
+                }
+            });
+        }
+    }
 
     calculateOverhead();
 });
