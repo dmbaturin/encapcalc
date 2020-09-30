@@ -233,6 +233,11 @@ function mergeObjects(l, r) {
    return l;
 }
 
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker
+           .register('sw.js')
+           .then(function() { console.log('Service Worker Registered'); });
+}
 
 // UI setup
 document.addEventListener("DOMContentLoaded", function () {
