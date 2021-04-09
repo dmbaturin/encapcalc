@@ -33,6 +33,7 @@ var baseProtocols = {
   "VXLAN": 16,
   "NVGRE": 8,
   "STT": 38,
+  "GENEVE": 8,
   "WireGuard": 40,
 };
 

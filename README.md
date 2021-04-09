@@ -21,3 +21,4 @@ A live version is available at https://baturin.org/tools/encapcalc/
 * MACSec: "an additional 16-byte MACsec Security Tag or SecTAG was included, as well as a 16-byte Integrity Check Value (ICV) at the end of the frame" ([1](https://www.cisco.com/c/en/us/products/collateral/ios-nx-os-software/identity-based-networking-services/white-paper-c11-737544.html))
 * LISP: [RFC6830](https://tools.ietf.org/html/rfc6830)
 * EoIP: https://help.mikrotik.com/docs/pages/viewpage.action?pageId=24805521
+* GENEVE: https://tools.ietf.org/html/rfc8926#section-3.4 (however, it also supports variable-length options)
