@@ -71,7 +71,7 @@ THE SOFTWARE.
       </div>
       <div class="box-wrapper">
         <div id="protocols">
-          <span>Protocols (click protocol buttons one or more time to add):</span>
+          <span>Protocols:</span>
             <!-- Generated content here -->
         </div>
       </div>
@@ -85,6 +85,9 @@ THE SOFTWARE.
           This tool allows you to easily see what each protocol adds to your packet. Click protocol buttons to add protocols to the stack.
           Some protocols have additional options, e.g. if you click Ethernet, you will see VLAN and QinQ header option checkboxes.
         </p>
+        <p>
+          You can click the same protocol button more than once, e.g. for the IPIP encapsulation you just click the IPv4 button twice.
+        </p>
         <p>Examples:</p>
         <ul>
           <li> <a href="?protocols=IPv4,GRE,IPv6,TCP">TCP <abbr title="Maximum Segment Size">MSS</abbr> for IPv6 in GRE over IPv4</a></li>
@@ -92,7 +95,7 @@ THE SOFTWARE.
         </ul>
         <p>
           Header sizes for VXLAN, LISP, and WireGuard include UDP, and STT includes TCP, because these protocols never use any other L4 protocol.
-          Everything else is pure header size exclusing any outer or inner protocols, e.g. &ldquo;MPLS&rdquo; is the size of a single MPLS label
+          Everything else is pure header size, without any outer or inner protocols, e.g. &ldquo;MPLS&rdquo; is the size of a single MPLS label
           (4 bytes).
         </p>
       </div>
